@@ -30,16 +30,17 @@ button.p,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .item{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:7px;margin-bottom:4px;color:#14212b;background:#fff;border:1px solid var(--line)}
 .item .n{flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer}.item .c{font-size:12px;opacity:.7}
 .item .b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
-#list{max-height:60vh;overflow-y:auto}.flash{outline:3px solid var(--acc)}
+#list{max-height:60vh;overflow-y:auto}.dup{background:#b3261e;color:#fff;border-radius:4px;padding:0 5px;font-size:12px;margin-left:4px}.warn{background:var(--badbg);color:var(--bad);border:1px solid var(--bad);border-radius:8px;padding:10px;margin-top:10px;display:none}.flash{outline:3px solid var(--acc)}
 </style></head><body><main>
-<h1>Scanner codes-barres <small style="font-size:12px;color:var(--mut)">v3</small></h1>
+<h1>Scanner codes-barres <small style="font-size:12px;color:var(--mut)">v5</small></h1>
 <div class="card">
  <div class="row"><input id="scan" inputmode="numeric" autocomplete="off" placeholder="Scannez ou tapez un code-barres" autofocus><button class="p" id="go">OK</button></div>
  <div class="row"><button id="cam" style="flex:1">Scanner avec la caméra</button></div>
  <div id="reader"></div><div id="msg" role="status"></div>
  <div id="add">
   <label for="nm">Nom de l'article</label><input id="nm" list="names" dir="auto" autocomplete="off"><datalist id="names"></datalist>
-  <label for="cd">Code article (facultatif)</label><input id="cd" autocomplete="off">
+  <label for="cd">Code article (facultatif : numéro automatique si vide)</label><input id="cd" autocomplete="off">
+  <div class="warn" id="nw"><div id="nwt"></div><div class="row"><button class="p" id="nwy" style="flex:1">Ajouter quand même</button><button id="nwn" style="flex:1">Changer le nom</button></div></div>
   <div class="row"><button class="p" id="save" style="flex:1">Ajouter ce code-barres</button><button id="cancel">Annuler</button></div>
  </div>
 </div>
@@ -53,7 +54,7 @@ button.p,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 <div class="card">
  <h2>Filtrer</h2>
  <input id="q" dir="auto" placeholder="Mots de l'article ou code-barres (ex: cahier 96)">
- <div class="row"><button class="chip on" data-m="all">Tous</button><button class="chip" data-m="multi">Plusieurs codes</button><button class="chip" data-m="single">Un seul code</button></div>
+ <div class="row"><button class="chip on" data-m="all">Tous</button><button class="chip" data-m="multi">Plusieurs codes</button><button class="chip" data-m="single">Un seul code</button><button class="chip" data-m="dup">Codes en double</button></div>
  <div class="row"><select id="sort" style="flex:1"><option value="list">Ordre de la liste</option><option value="az">Nom A → Z</option><option value="cnt">Plus de codes d'abord</option></select><button id="grp">Grouper par article</button><button id="clr">Effacer</button></div>
  <div class="meta" id="count"></div><div id="list"></div>
 </div>
@@ -72,20 +73,20 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){}};
 let mode='all',grouped=false,pending=null,shown=[];
 function stats(){const cnt={},seen=[],col=[];items.forEach(i=>{const k=norm(i.n);cnt[k]=(cnt[k]||0)+1});const s={};
- items.forEach(i=>{const k=norm(i.n);s[k]=(s[k]||0)+1;col.push(cnt[k]>1?COLORS[(s[k]-1)%COLORS.length]:'#fff')});return{cnt,col}}
-function rowHtml(i,col,flash){return `<div class="item${flash?' flash':''}" style="background:${col}"><div class="n" data-n="${esc(i.n)}"><span dir="auto">${esc(i.n)}</span><div class="c">${esc(i.c)}</div></div><div class="b">${esc(i.b)}</div></div>`}
+ items.forEach(i=>{const k=norm(i.n);s[k]=(s[k]||0)+1;col.push(cnt[k]>1?COLORS[(s[k]-1)%COLORS.length]:'#fff')});const bc={};items.forEach(i=>{const b=String(i.b);bc[b]=(bc[b]||0)+1});return{cnt,col,bc}}
+function rowHtml(i,col,flash,bn){return `<div class="item${flash?' flash':''}" style="background:${col}"><div class="n" data-n="${esc(i.n)}"><span dir="auto">${esc(i.n)}</span><div class="c">${esc(i.c)}</div></div><div class="b">${esc(i.b)}${bn>1?` <span class="dup">×${bn}</span>`:''}</div></div>`}
 function render(flashB){
-  const {cnt,col}=stats(),words=norm($('q').value).split(/\s+/).filter(Boolean);
-  let a=items.map((i,x)=>({i,x,k:norm(i.n),col:col[x]})).filter(r=>{
-    const n=cnt[r.k];if(mode==='multi'&&n<2)return false;if(mode==='single'&&n!==1)return false;
+  const {cnt,col,bc}=stats(),words=norm($('q').value).split(/\s+/).filter(Boolean);
+  let a=items.map((i,x)=>({i,x,k:norm(i.n),col:col[x],bn:bc[String(i.b)]})).filter(r=>{
+    const n=cnt[r.k];if(mode==='multi'&&n<2)return false;if(mode==='single'&&n!==1)return false;if(mode==='dup'&&r.bn<2)return false;
     const h=r.k+' '+norm(r.i.b)+' '+norm(r.i.c);return words.every(w=>h.includes(w))});
   const so=$('sort').value;
   if(so==='az')a.sort((p,q)=>p.k.localeCompare(q.k)||p.x-q.x);
   if(so==='cnt')a.sort((p,q)=>cnt[q.k]-cnt[p.k]||p.k.localeCompare(q.k)||p.x-q.x);
   shown=a.map(r=>r.i);let h='';
   if(grouped){const g=new Map();a.forEach(r=>{if(!g.has(r.k))g.set(r.k,[]);g.get(r.k).push(r)});
-   g.forEach(rs=>{h+=`<div class="gh"><span dir="auto">${esc(rs[0].i.n)}</span><span>${rs.length} code(s)</span></div>`+rs.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB)).join('')})}
-  else h=a.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB)).join('');
+   g.forEach(rs=>{h+=`<div class="gh"><span dir="auto">${esc(rs[0].i.n)}</span><span>${rs.length} code(s)</span></div>`+rs.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB,r.bn)).join('')})}
+  else h=a.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB,r.bn)).join('');
   $('list').innerHTML=h||'<div class="meta">Aucun résultat.</div>';
   $('count').textContent=a.length+' ligne(s) sur '+items.length+' · '+new Set(a.map(r=>r.k)).size+' article(s)';
   $('names').innerHTML=[...new Set(items.map(i=>i.n))].map(v=>`<option value="${esc(v)}">`).join('');
@@ -99,19 +100,31 @@ function say(c,h){const m=$('msg');m.className=c;m.innerHTML=h}
 function handle(code){
   code=String(code).trim();if(!code)return;const x=items.findIndex(i=>String(i.b)===code);$('add').style.display='none';
   if(x>=0){const i=items[x],c=stats().col[x];
-    say('bad',`<b>Déjà dans la liste</b><br>${esc(code)}<br><span class="sw" style="background:${c}"></span><span dir="auto">${esc(i.n)}</span> (code article ${esc(i.c)})`);
+    say('bad',`<b>Déjà dans la liste</b><br>${esc(code)}<br><span class="sw" style="background:${c}"></span><span dir="auto">${esc(i.n)}</span> (code article ${esc(i.c)})<div class="row"><button class="p" id="dupb" style="flex:1">Ajouter quand même</button></div>`);
+    $('dupb').onclick=()=>{pending=code;openAdd(i.n,i.c);$('save').scrollIntoView({block:'center'});$('save').focus()};
     $('q').value='';render(code);const f=document.querySelector('.flash');if(f)f.scrollIntoView({block:'center'});
     if(navigator.vibrate)navigator.vibrate([200,100,200]);
   }else{pending=code;say('ok',`<b>Nouveau code-barres</b><br>${esc(code)}<br>Indiquez l'article pour l'ajouter.`);
-    $('nm').value='';$('cd').value='';$('add').style.display='block';$('nm').focus()}
+    openAdd('','');$('nm').focus()}
   $('scan').value='';
 }
-$('nm').addEventListener('input',()=>{const m=items.find(i=>norm(i.n)===norm($('nm').value));if(m)$('cd').value=m.c});
+let fromName=false;
+$('nm').addEventListener('input',()=>{nameOk=false;$('nw').style.display='none';const m=items.find(i=>norm(i.n)===norm($('nm').value));if(m){$('cd').value=m.c;fromName=true}else if(fromName){$('cd').value='';fromName=false}});
+const nextCode=()=>{let m=0,f=false;items.forEach(i=>{const c=String(i.c).trim();if(/^\d+$/.test(c)){m=Math.max(m,Number(c));f=true}});return f?String(m+1):''};
+let okName='',nameOk=false;
+function openAdd(name,code){okName=norm(name);nameOk=false;fromName=false;$('nw').style.display='none';$('nm').value=name;$('cd').value=code;$('cd').placeholder='Auto : '+nextCode();$('add').style.display='block'}
+function doSave(){const n=$('nm').value.trim(),m=items.find(i=>norm(i.n)===norm(n));
+  const code=$('cd').value.trim()||(m&&m.c)||nextCode();
+  items.push({c:code,n:n,b:pending});save();const cm=stats().col;
+  say('ok',`<b>Ajouté</b><br>${esc(pending)} · code article ${esc(code)}<br><span class="sw" style="background:${cm[cm.length-1]}"></span><span dir="auto">${esc(n)}</span>`);
+  $('add').style.display='none';$('nw').style.display='none';$('q').value='';render(pending);pending=null;$('scan').focus()}
 $('save').onclick=()=>{const n=$('nm').value.trim();if(!n){$('nm').focus();return}
-  items.push({c:$('cd').value.trim(),n:n,b:pending});save();const cm=stats().col;
-  say('ok',`<b>Ajouté</b><br>${esc(pending)}<br><span class="sw" style="background:${cm[cm.length-1]}"></span><span dir="auto">${esc(n)}</span>`);
-  $('add').style.display='none';$('q').value='';render(pending);pending=null;$('scan').focus()};
-$('cancel').onclick=()=>{$('add').style.display='none';$('msg').className='';pending=null};
+  const g=items.filter(i=>norm(i.n)===norm(n));
+  if(g.length&&norm(n)!==okName&&!nameOk){$('nwt').innerHTML=`<b>Cet article existe déjà</b> (${g.length} code(s)-barres : ${g.slice(0,4).map(i=>esc(i.b)).join(', ')}${g.length>4?'…':''}). Ajouter ce code-barres quand même ?`;$('nw').style.display='block';$('nw').scrollIntoView({block:'center'});return}
+  doSave()};
+$('nwy').onclick=()=>{nameOk=true;doSave()};
+$('nwn').onclick=()=>{$('nw').style.display='none';$('nm').focus();$('nm').select()};
+$('cancel').onclick=()=>{$('add').style.display='none';$('nw').style.display='none';$('msg').className='';pending=null};
 $('go').onclick=()=>handle($('scan').value);
 $('scan').addEventListener('keydown',e=>{if(e.key==='Enter')handle($('scan').value)});
 /* Excel export */
@@ -146,7 +159,7 @@ $('file').onchange=async e=>{
 };
 $('iadd').onclick=()=>{const have=new Set(items.map(i=>String(i.b)));let n=0;
   imported.forEach(i=>{if(!have.has(i.b)){have.add(i.b);items.push(i);n++}});save();$('imp').style.display='none';say('ok',`<b>${n} article(s) ajouté(s)</b>`);render()};
-$('irep').onclick=()=>{if(!confirm('Remplacer toute la liste actuelle ?'))return;const s=new Set();items=imported.filter(i=>!s.has(i.b)&&s.add(i.b));save();$('imp').style.display='none';say('ok',`<b>Liste remplacée : ${items.length} lignes</b>`);render()};
+$('irep').onclick=()=>{if(!confirm('Remplacer toute la liste actuelle ?'))return;const s=new Set();items=imported.filter(i=>{const k=i.b+'|'+norm(i.n);return !s.has(k)&&s.add(k)});save();$('imp').style.display='none';say('ok',`<b>Liste remplacée : ${items.length} lignes</b>`);render()};
 $('icn').onclick=()=>{$('imp').style.display='none'};
 /* camera */
 let sc=null,on=false,last=0;
