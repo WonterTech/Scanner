@@ -15,9 +15,9 @@ h1{font-size:20px;margin:4px 0 12px}h2{font-size:15px;margin:0 0 8px}
 input,button,select{font:inherit;border-radius:8px;border:1px solid var(--line);padding:10px;background:var(--card);color:var(--ink);min-width:0}
 input[type=text],input:not([type]){flex:1;width:100%}
 button{cursor:pointer;font-weight:600}
-button.p,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-:root:not([data-theme="light"]) button.p,:root:not([data-theme="light"]) .chip.on{color:#06223f}
-.chip{flex:1;padding:8px 6px;font-size:14px}
+button.p,.chip.on,.tb.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+:root:not([data-theme="light"]) button.p,:root:not([data-theme="light"]) .chip.on,:root:not([data-theme="light"]) .tb.on{color:#06223f}
+.chip,.tb{flex:1;padding:8px 6px;font-size:14px}
 #reader{width:100%;margin-top:10px;display:none;border-radius:8px;overflow:hidden}
 #msg{margin-top:10px;border-radius:8px;padding:12px;display:none}
 #msg.bad{display:block;background:var(--badbg);color:var(--bad);border:1px solid var(--bad)}
@@ -30,13 +30,14 @@ button.p,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .item{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:7px;margin-bottom:4px;color:#14212b;background:#fff;border:1px solid var(--line)}
 .item .n{flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer}.item .c{font-size:12px;opacity:.7}
 .item .b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
-#list{max-height:60vh;overflow-y:auto}.dup{background:#b3261e;color:#fff;border-radius:4px;padding:0 5px;font-size:12px;margin-left:4px}.warn{background:var(--badbg);color:var(--bad);border:1px solid var(--bad);border-radius:8px;padding:10px;margin-top:10px;display:none}.lb{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}.act{display:flex;gap:4px;align-items:flex-start}.act button{padding:3px 8px;font-size:15px;background:#fff;color:#14212b;border:1px solid var(--line)}#ed{display:none;position:fixed;inset:0;background:#0009;z-index:10;padding:14px;overflow:auto}.flash{outline:3px solid var(--acc)}
+#list{max-height:60vh;overflow-y:auto}.dup{background:#b3261e;color:#fff;border-radius:4px;padding:0 5px;font-size:12px;margin-left:4px}.warn{background:var(--badbg);color:var(--bad);border:1px solid var(--bad);border-radius:8px;padding:10px;margin-top:10px;display:none}.lb{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}.act{display:flex;gap:4px;align-items:flex-start}.act button{padding:3px 8px;font-size:15px;background:#fff;color:#14212b;border:1px solid var(--line)}#ed{display:none;position:fixed;inset:0;background:#0009;z-index:10;padding:14px;overflow:auto}.rl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border-radius:7px;margin-top:4px;color:#14212b;border:1px solid var(--line)}.rl input{width:22px;height:22px;flex:none;padding:0}.flash{outline:3px solid var(--acc)}
 </style></head><body><main>
-<h1>Scanner codes-barres <small style="font-size:12px;color:var(--mut)">v6</small></h1>
+<h1>Scanner codes-barres <small style="font-size:12px;color:var(--mut)">v7</small></h1>
 <div class="card">
  <div class="row"><input id="scan" inputmode="numeric" autocomplete="off" placeholder="Scannez ou tapez un code-barres" autofocus><button class="p" id="go">OK</button></div>
  <div class="row"><button id="cam" style="flex:1">Scanner avec la caméra</button></div>
  <div id="reader"></div><div id="msg" role="status"></div>
+ <div id="rs" style="display:none;margin-top:10px"><div id="rst"></div><div id="rsl"></div><div id="rse" class="meta" style="color:var(--bad)"></div><div class="row"><button class="p" id="rsok" style="flex:1">Garder la sélection, le reste à la corbeille</button><button id="rsno">Annuler</button></div></div>
  <div id="add">
   <label for="nm">Nom de l'article</label><input id="nm" list="names" dir="auto" autocomplete="off"><datalist id="names"></datalist>
   <label for="cd">Code article (facultatif : numéro automatique si vide)</label><input id="cd" autocomplete="off">
@@ -46,13 +47,14 @@ button.p,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 </div>
 <div class="card">
  <h2>Excel</h2>
- <div class="row"><button class="p" id="impb" style="flex:1">Importer un fichier Excel</button><button id="exp" style="flex:1">Exporter tout</button><button id="expf" style="flex:1">Exporter le filtre</button></div>
+ <div class="row"><button class="p" id="impb" style="flex:1">Importer un fichier Excel</button><button id="exp" style="flex:1">Exporter cette liste</button><button id="expf" style="flex:1">Exporter le filtre</button><button id="expfin" style="flex:1">Liste finale (gardés + non traités)</button></div>
  <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
  <div id="imp"><div id="impt" class="meta"></div><div class="row"><button class="p" id="iadd" style="flex:1">Ajouter les nouveaux</button><button id="irep" style="flex:1">Remplacer la liste</button><button id="icn">Annuler</button></div></div>
  <div class="meta">Colonnes lues : Code Article, Libelle, Code à barre. Les ajouts sont gardés dans ce navigateur : exportez de temps en temps pour garder une copie.</div>
 </div>
 <div class="card">
- <h2>Filtrer</h2>
+ <div class="row"><button class="tb on" data-t="s" id="t_s">Départ</button><button class="tb" data-t="k" id="t_k">Gardés</button><button class="tb" data-t="b" id="t_b">Corbeille</button></div>
+ <h2 style="margin-top:12px">Filtrer</h2>
  <input id="q" dir="auto" placeholder="Mots de l'article ou code-barres (ex: cahier 96)">
  <div class="row"><button class="chip on" data-m="all">Tous</button><button class="chip" data-m="multi">Plusieurs codes</button><button class="chip" data-m="single">Un seul code</button><button class="chip" data-m="dup">Codes en double</button></div>
  <div class="row"><select id="sort" style="flex:1"><option value="list">Ordre de la liste</option><option value="az">Nom A → Z</option><option value="cnt">Plus de codes d'abord</option></select><button id="grp">Grouper par article</button><button id="clr">Effacer</button></div>
@@ -76,20 +78,22 @@ const SEED=[["*910331","أنيسي في مساراتي امتحانات س3 ج2"
 const COLORS=['#FFF2CC','#DDEBF7','#E2EFDA','#FCE4D6','#E4DFEC','#D9D9D9','#FFD9E6','#D0F0F0','#F8CBAD','#C9E7A7'];
 const KEY='barcodes_v1';
 let items;try{const s=localStorage.getItem(KEY);items=s?JSON.parse(s):null}catch(e){items=null}
-if(!items)items=SEED.map(r=>({c:r[0],n:r[1],b:r[2]}));
+if(!items)items=SEED.map(r=>({c:r[0],n:r[1],b:r[2],st:'s'}));
+items.forEach(i=>{if(!i.st)i.st='s'});
+let tab='s';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){}};
 let mode='all',grouped=false,pending=null,shown=[];
-function stats(){const cnt={},seen=[],col=[];items.forEach(i=>{const k=norm(i.n);cnt[k]=(cnt[k]||0)+1});const s={};
- items.forEach(i=>{const k=norm(i.n);s[k]=(s[k]||0)+1;col.push(cnt[k]>1?COLORS[(s[k]-1)%COLORS.length]:'#fff')});const bc={};items.forEach(i=>{const b=String(i.b);bc[b]=(bc[b]||0)+1});return{cnt,col,bc}}
-function rowHtml(i,col,flash,bn){return `<div class="item${flash?' flash':''}" style="background:${col}"><div class="n" data-n="${esc(i.n)}"><span dir="auto">${esc(i.n)}</span><div class="c">${esc(i.c)}</div></div><div class="b">${esc(i.b)}${bn>1?` <span class="dup">×${bn}</span>`:''}</div><div class="act"><button class="ed" data-x="${items.indexOf(i)}" title="Modifier">✎</button><button class="del" data-x="${items.indexOf(i)}" title="Supprimer">🗑</button></div></div>`}
+function stats(){const cnt={},seen=[],col=[];items.forEach(i=>{const k=i.st+'|'+norm(i.n);cnt[k]=(cnt[k]||0)+1});const s={};
+ items.forEach(i=>{const k=i.st+'|'+norm(i.n);s[k]=(s[k]||0)+1;col.push(cnt[k]>1?COLORS[(s[k]-1)%COLORS.length]:'#fff')});const bc={};items.forEach(i=>{const b=i.st+'|'+String(i.b);bc[b]=(bc[b]||0)+1});return{cnt,col,bc}}
+function rowHtml(i,col,flash,bn){return `<div class="item${flash?' flash':''}" style="background:${col}"><div class="n" data-n="${esc(i.n)}"><span dir="auto">${esc(i.n)}</span><div class="c">${esc(i.c)}</div></div><div class="b">${esc(i.b)}${bn>1?` <span class="dup">×${bn}</span>`:''}</div><div class="act">${i.st==='s'?`<button class="rv" data-x="${items.indexOf(i)}" title="Trier cet article">✔</button>`:`<button class="bk" data-x="${items.indexOf(i)}" title="Remettre dans le départ">↩</button>`}<button class="ed" data-x="${items.indexOf(i)}" title="Modifier">✎</button><button class="del" data-x="${items.indexOf(i)}" title="Supprimer">🗑</button></div></div>`}
 function render(flashB){
   const {cnt,col,bc}=stats(),words=norm($('q').value).split(/\s+/).filter(Boolean);
-  let a=items.map((i,x)=>({i,x,k:norm(i.n),col:col[x],bn:bc[String(i.b)]})).filter(r=>{
+  let a=items.map((i,x)=>({i,x,k:i.st+'|'+norm(i.n),nk:norm(i.n),col:col[x],bn:bc[i.st+'|'+String(i.b)]})).filter(r=>r.i.st===tab).filter(r=>{
     const n=cnt[r.k];if(mode==='multi'&&n<2)return false;if(mode==='single'&&n!==1)return false;if(mode==='dup'&&r.bn<2)return false;
-    const h=r.k+' '+norm(r.i.b)+' '+norm(r.i.c);return words.every(w=>h.includes(w))});
+    const h=r.nk+' '+norm(r.i.b)+' '+norm(r.i.c);return words.every(w=>h.includes(w))});
   const so=$('sort').value;
   if(so==='az')a.sort((p,q)=>p.k.localeCompare(q.k)||p.x-q.x);
   if(so==='cnt')a.sort((p,q)=>cnt[q.k]-cnt[p.k]||p.k.localeCompare(q.k)||p.x-q.x);
@@ -98,26 +102,38 @@ function render(flashB){
    g.forEach(rs=>{h+=`<div class="gh"><span dir="auto">${esc(rs[0].i.n)}</span><span>${rs.length} code(s)</span></div>`+rs.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB,r.bn)).join('')})}
   else h=a.map(r=>rowHtml(r.i,r.col,String(r.i.b)===flashB,r.bn)).join('');
   $('list').innerHTML=h||'<div class="meta">Aucun résultat.</div>';
-  $('count').textContent=a.length+' ligne(s) sur '+items.length+' · '+new Set(a.map(r=>r.k)).size+' article(s)';
+  ['s','k','b'].forEach(z=>{$('t_'+z).textContent={s:'Départ',k:'Gardés',b:'Corbeille'}[z]+' ('+items.filter(i=>i.st===z).length+')'});
+  $('count').textContent=a.length+' ligne(s) sur '+items.filter(i=>i.st===tab).length+' · '+new Set(a.map(r=>r.k)).size+' article(s)';
   $('names').innerHTML=[...new Set(items.map(i=>i.n))].map(v=>`<option value="${esc(v)}">`).join('');
 }
 document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render()});
 $('grp').onclick=()=>{grouped=!grouped;$('grp').classList.toggle('p',grouped);render()};
 $('clr').onclick=()=>{$('q').value='';mode='all';$('sort').value='list';document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m==='all'));render()};
 $('sort').onchange=()=>render();$('q').addEventListener('input',()=>render());
-$('list').onclick=e=>{const ed=e.target.closest('.ed'),dl=e.target.closest('.del');if(ed){openEd(+ed.dataset.x);return}if(dl){delLine(+dl.dataset.x);return}const n=e.target.closest('.n');if(n){$('q').value=n.dataset.n;render();window.scrollTo({top:0,behavior:'smooth'})}};
+$('list').onclick=e=>{const ed=e.target.closest('.ed'),dl=e.target.closest('.del');const rv=e.target.closest('.rv'),bk=e.target.closest('.bk');if(rv){openRs(+rv.dataset.x);return}if(bk){items[+bk.dataset.x].st='s';save();say('ok','<b>Remis dans la liste de départ</b>');render();return}if(ed){openEd(+ed.dataset.x);return}if(dl){delLine(+dl.dataset.x);return}const n=e.target.closest('.n');if(n){$('q').value=n.dataset.n;render();window.scrollTo({top:0,behavior:'smooth'})}};
 function say(c,h){const m=$('msg');m.className=c;m.innerHTML=h}
-function handle(code){
-  code=String(code).trim();if(!code)return;const x=items.findIndex(i=>String(i.b)===code);$('add').style.display='none';
-  if(x>=0){const i=items[x],c=stats().col[x];
-    say('bad',`<b>Déjà dans la liste</b><br>${esc(code)}<br><span class="sw" style="background:${c}"></span><span dir="auto">${esc(i.n)}</span> (code article ${esc(i.c)})<div class="row"><button class="p" id="dupb" style="flex:1">Ajouter quand même</button></div>`);
-    $('dupb').onclick=()=>{pending=code;openAdd(i.n,i.c);$('save').scrollIntoView({block:'center'});$('save').focus()};
-    $('q').value='';render(code);const f=document.querySelector('.flash');if(f)f.scrollIntoView({block:'center'});
-    if(navigator.vibrate)navigator.vibrate([200,100,200]);
-  }else{pending=code;say('ok',`<b>Nouveau code-barres</b><br>${esc(code)}<br>Indiquez l'article pour l'ajouter.`);
-    openAdd('','');$('nm').focus()}
-  $('scan').value='';
-}
+const gkey=i=>String(i.c).trim()?'c:'+String(i.c).trim():'n:'+norm(i.n);
+function setTab(z){tab=z;document.querySelectorAll('.tb').forEach(b=>b.classList.toggle('on',b.dataset.t===z));render()}
+document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+let rsGroup=[];
+function openRs(x){const it=items[x],k=gkey(it);$('add').style.display='none';$('rse').textContent='';
+  const g=[];items.forEach((r,j)=>{if(r.st==='s'&&gkey(r)===k)g.push(j)});rsGroup=g;const col=stats().col;
+  $('rst').innerHTML=`<b dir="auto">${esc(it.n)}</b><br>Code article ${esc(it.c)||'(vide)'} · ${g.length} ligne(s). Cochez celle(s) à garder : les autres iront à la corbeille.`;
+  $('rsl').innerHTML=g.map(j=>`<label class="rl" style="background:${col[j]}"><input type="checkbox" data-j="${j}" ${j===x?'checked':''}> <span dir="auto">${esc(items[j].n)}</span> <b>${esc(items[j].b)}</b>${j===x?' <em>(scanné)</em>':''}</label>`).join('');
+  $('rs').style.display='block';$('rs').scrollIntoView({block:'center'})}
+$('rsok').onclick=()=>{const sel=[...document.querySelectorAll('#rsl input:checked')].map(c=>+c.dataset.j);
+  if(!sel.length){$('rse').textContent='Cochez au moins une ligne à garder.';return}
+  rsGroup.forEach(j=>{items[j].st=sel.includes(j)?'k':'b'});save();$('rs').style.display='none';
+  say('ok',`<b>${sel.length} gardé(s), ${rsGroup.length-sel.length} envoyé(s) à la corbeille</b>`);render();$('scan').focus()};
+$('rsno').onclick=()=>{$('rs').style.display='none';$('msg').className=''};
+function handle(code){code=String(code).trim();if(!code)return;$('add').style.display='none';$('rs').style.display='none';
+  const f=items.findIndex(i=>String(i.b)===code&&i.st==='s');
+  if(f>=0){say('ok',`<b>${esc(code)}</b> trouvé dans la liste de départ`);openRs(f)}
+  else{const o=items.findIndex(i=>String(i.b)===code);
+    if(o>=0){const i=items[o];say('bad',`<b>Déjà traité</b><br>${esc(code)} est dans ${i.st==='k'?'les Gardés':'la Corbeille'}<br><span dir="auto">${esc(i.n)}</span><div class="row"><button class="p" id="rst2" style="flex:1">Remettre dans le départ</button></div>`);
+      $('rst2').onclick=()=>{i.st='s';save();render();handle(code)};if(navigator.vibrate)navigator.vibrate([200,100,200])}
+    else{pending=code;say('bad',`<b>Introuvable</b><br>${esc(code)} n'est dans aucune liste. Indiquez l'article pour l'ajouter au départ.`);openAdd('','');$('nm').focus()}}
+  $('scan').value=''}
 let fromName=false;
 $('nm').addEventListener('input',()=>{nameOk=false;$('nw').style.display='none';const m=items.find(i=>norm(i.n)===norm($('nm').value));if(m){$('cd').value=m.c;fromName=true}else if(fromName){$('cd').value='';fromName=false}});
 const nextCode=()=>{let m=0,f=false;items.forEach(i=>{const c=String(i.c).trim();if(/^\d+$/.test(c)){m=Math.max(m,Number(c));f=true}});return f?String(m+1):''};
@@ -125,7 +141,7 @@ let okName='',nameOk=false;
 function openAdd(name,code){okName=norm(name);nameOk=false;fromName=false;$('nw').style.display='none';$('nm').value=name;$('cd').value=code;$('cd').placeholder='Auto : '+nextCode();$('add').style.display='block'}
 function doSave(){const n=$('nm').value.trim(),m=items.find(i=>norm(i.n)===norm(n));
   const code=$('cd').value.trim()||(m&&m.c)||nextCode();
-  items.push({c:code,n:n,b:pending});save();const cm=stats().col;
+  items.push({c:code,n:n,b:pending,st:'s'});save();tab='s';document.querySelectorAll('.tb').forEach(b=>b.classList.toggle('on',b.dataset.t==='s'));const cm=stats().col;
   say('ok',`<b>Ajouté</b><br>${esc(pending)} · code article ${esc(code)}<br><span class="sw" style="background:${cm[cm.length-1]}"></span><span dir="auto">${esc(n)}</span>`);
   $('add').style.display='none';$('nw').style.display='none';$('q').value='';render(pending);pending=null;$('scan').focus()}
 $('save').onclick=()=>{const n=$('nm').value.trim();if(!n){$('nm').focus();return}
@@ -140,12 +156,13 @@ $('scan').addEventListener('keydown',e=>{if(e.key==='Enter')handle($('scan').val
 /* Excel export */
 function exportRows(list,name){
   if(typeof XLSX==='undefined'){say('bad',"La bibliothèque Excel n'est pas chargée (internet requis la 1re fois).");return}
-  const cnt={};items.forEach(i=>{const k=norm(i.n);cnt[k]=(cnt[k]||0)+1});
+  const cnt={};list.forEach(i=>{const k=norm(i.n);cnt[k]=(cnt[k]||0)+1});
   const ws=XLSX.utils.aoa_to_sheet([['Code Article','Libelle','Code à barre','Nb codes']].concat(list.map(i=>[i.c,i.n,String(i.b),cnt[norm(i.n)]])));
   ws['!cols']=[{wch:14},{wch:50},{wch:18},{wch:10}];ws['!autofilter']={ref:'A1:D'+(list.length+1)};
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Liste');XLSX.writeFile(wb,name)}
-$('exp').onclick=()=>exportRows(items,'ListeCodeBarre.xlsx');
-$('expf').onclick=()=>exportRows(shown,'ListeCodeBarre_filtre.xlsx');
+$('exp').onclick=()=>exportRows(items.filter(i=>i.st===tab),{s:'Depart',k:'Gardes',b:'Corbeille'}[tab]+'.xlsx');
+$('expfin').onclick=()=>exportRows(items.filter(i=>i.st!=='b'),'ListeFinale.xlsx');
+$('expf').onclick=()=>exportRows(shown,'Filtre.xlsx');
 /* Excel import */
 let imported=[];
 $('impb').onclick=()=>$('file').click();
@@ -160,7 +177,7 @@ $('file').onchange=async e=>{
       if(n>=0&&b>=0){hr=r;cN=n;cB=b;const c=t.findIndex((v,i)=>i!==b&&i!==n&&/code|r[eé]f/i.test(v));cC=c>=0?c:-1;break}}
     imported=[];
     rows.slice(hr+1).forEach(r=>{const n=String(r[cN]||'').trim(),b=String(r[cB]||'').trim();
-      if(!n||!b||/barre|ean|barcode/i.test(b))return;imported.push({c:cC>=0?String(r[cC]||'').trim():'',n:n,b:b})});
+      if(!n||!b||/barre|ean|barcode/i.test(b))return;imported.push({c:cC>=0?String(r[cC]||'').trim():'',n:n,b:b,st:'s'})});
     const have=new Set(items.map(i=>String(i.b))),nw=imported.filter(i=>!have.has(i.b)).length;
     $('impt').textContent=f.name+' : '+imported.length+' ligne(s) lues, '+nw+' nouveau(x), '+(imported.length-nw)+' déjà présent(s).';
     $('imp').style.display=imported.length?'block':'none';
@@ -169,23 +186,23 @@ $('file').onchange=async e=>{
 };
 $('iadd').onclick=()=>{const have=new Set(items.map(i=>String(i.b)));let n=0;
   imported.forEach(i=>{if(!have.has(i.b)){have.add(i.b);items.push(i);n++}});save();$('imp').style.display='none';say('ok',`<b>${n} article(s) ajouté(s)</b>`);render()};
-$('irep').onclick=()=>{if(!confirm('Remplacer toute la liste actuelle ?'))return;const s=new Set();items=imported.filter(i=>{const k=i.b+'|'+norm(i.n);return !s.has(k)&&s.add(k)});save();$('imp').style.display='none';say('ok',`<b>Liste remplacée : ${items.length} lignes</b>`);render()};
+$('irep').onclick=()=>{if(!confirm('Remplacer TOUTES les listes (départ, gardés, corbeille) par ce fichier ?'))return;const s=new Set();items=imported.filter(i=>{const k=i.b+'|'+norm(i.n);return !s.has(k)&&s.add(k)});save();$('imp').style.display='none';say('ok',`<b>Liste remplacée : ${items.length} lignes</b>`);render()};
 $('icn').onclick=()=>{$('imp').style.display='none'};
 /* edit / delete */
 let ex=-1;
-const artCount=n=>items.filter(r=>norm(r.n)===norm(n)).length;
-function openEd(x){ex=x;const i=items[x],c=artCount(i.n);$('en').value=i.n;$('ec').value=i.c;$('eb').value=i.b;$('ecnt').textContent=c+' lignes';$('eall').checked=c>1;$('eallw').style.display=c>1?'block':'none';$('eerr').textContent='';$('ed').style.display='block';$('en').focus()}
+const artCount=i=>items.filter(r=>r.st===i.st&&norm(r.n)===norm(i.n)).length;
+function openEd(x){ex=x;const i=items[x],c=artCount(i);$('en').value=i.n;$('ec').value=i.c;$('eb').value=i.b;$('ecnt').textContent=c+' lignes';$('eall').checked=c>1;$('eallw').style.display=c>1?'block':'none';$('eerr').textContent='';$('ed').style.display='block';$('en').focus()}
 function closeEd(){$('ed').style.display='none';ex=-1}
 function delLine(x){const i=items[x];if(!confirm('Supprimer cette ligne ?\n'+i.n+'\n'+i.b))return;items.splice(x,1);save();closeEd();say('ok','<b>Ligne supprimée</b>');render()}
 $('esv').onclick=()=>{const n=$('en').value.trim(),c=$('ec').value.trim(),b=$('eb').value.trim();
   if(!n||!b){$('eerr').textContent='Le nom et le code-barres sont obligatoires.';return}
   if(items.some((r,k)=>k!==ex&&String(r.b)===b)&&!confirm('Ce code-barres existe déjà dans la liste. Continuer ?'))return;
   const old=norm(items[ex].n);
-  if($('eall').checked&&artCount(items[ex].n)>1)items.forEach(r=>{if(norm(r.n)===old){r.n=n;r.c=c}});
-  items[ex]={c:c,n:n,b:b};save();closeEd();say('ok','<b>Modifié</b>');render()};
+  if($('eall').checked&&artCount(items[ex])>1)items.forEach(r=>{if(r.st===items[ex].st&&norm(r.n)===old){r.n=n;r.c=c}});
+  items[ex]={c:c,n:n,b:b,st:items[ex].st};save();closeEd();say('ok','<b>Modifié</b>');render()};
 $('ecn').onclick=closeEd;
 $('edl').onclick=()=>delLine(ex);
-$('eda').onclick=()=>{const k=norm(items[ex].n),c=artCount(items[ex].n);if(!confirm("Supprimer tout l'article et ses "+c+' ligne(s) ?\n'+items[ex].n))return;items=items.filter(r=>norm(r.n)!==k);save();closeEd();say('ok','<b>Article supprimé</b> ('+c+' ligne(s))');render()};
+$('eda').onclick=()=>{const k=norm(items[ex].n),sx=items[ex].st,c=artCount(items[ex]);if(!confirm("Supprimer tout l'article et ses "+c+' ligne(s) ?\n'+items[ex].n))return;items=items.filter(r=>!(r.st===sx&&norm(r.n)===k));save();closeEd();say('ok','<b>Article supprimé</b> ('+c+' ligne(s))');render()};
 $('ed').addEventListener('click',e=>{if(e.target.id==='ed')closeEd()});
 /* camera */
 let sc=null,on=false,last=0;
